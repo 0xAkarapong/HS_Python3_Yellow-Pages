@@ -10,10 +10,6 @@ class Contact:
         self.address = address
         self.notes = notes
 
-
-def add_contact_to_database(contact):
-    pass
-
 def create_database_table() :
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
@@ -30,3 +26,18 @@ def create_database_table() :
         ''')
     conn.commit()
     conn.close()
+
+def add_contact_to_database(contact):
+    pass
+
+def get_all_contacts_from_database():
+    pass
+
+def update_contact_in_database(contact):
+    pass
+
+def delete_contact_from_database(contact):
+    pass
+
+def search_contact_in_database(contact):
+    pass
