@@ -1,1 +1,10 @@
 /.venv/
+.idea/dataSources.xml
+.idea/HS_Python3_Yellow-Pages.iml
+.idea/material_theme_project_new.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/inspectionProfiles/Project_Default.xml
+__pycache__/constants.cpython-312.pyc

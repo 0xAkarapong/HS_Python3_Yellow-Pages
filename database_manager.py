@@ -27,17 +27,60 @@ def create_database_table() :
     conn.commit()
     conn.close()
 
-def add_contact_to_database(contact):
-    pass
+def add_contact_to_database(contact: Contact) -> int:
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
+    cursor.execute('''
+            INSERT INTO contacts (first_name, last_name, phone, email, address, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (contact.first_name, contact.last_name, contact.phone, contact.email, contact.address, contact.notes))
+    conn.commit()
+    contact_id = cursor.lastrowid
+    conn.close()
+    return contact_id
+
 
 def get_all_contacts_from_database():
-    pass
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM contacts")
+    rows = cursor.fetchall()
+    conn.close()
+
+    contacts = []
+    for row in rows:
+        contact = Contact(
+            contact_id=row[0],
+            first_name=row[1],
+            last_name=row[2],
+            phone=row[3],
+            email=row[4],
+            address=row[5],
+            notes=row[6]
+        )
+        contacts.append(contact)
+    return contacts
 
 def update_contact_in_database(contact):
-    pass
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE contacts SET
+            first_name = ?,
+            last_name = ?,
+            phone = ?,
+            email = ?,
+            address = ?,
+            notes = ?
+        WHERE id = ?
+    ''', (contact.first_name, contact.last_name, contact.phone, contact.email, contact.address, contact.notes, contact.contact_id))
+    conn.commit()
+    conn.close()
 
 def delete_contact_from_database(contact):
+    conn = sqlite3.connect(DATABASE_NAME)
     pass
 
 def search_contact_in_database(contact):
+    conn = sqlite3.connect(DATABASE_NAME)
     pass
