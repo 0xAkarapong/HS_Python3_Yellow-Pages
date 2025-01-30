@@ -103,23 +103,24 @@ def cosine_similarity(vec1, vec2):
     return dot_product / (norm_vec1 * norm_vec2)
 
 def search_contact_in_database(query):
-    print(f"Searching for query: '{query}'") # Print the search query
+    print(f"Searching for query: '{query}'")
     if not API_KEY:
         raise ValueError("MISTRAL_API_KEY environment variable not set. Cannot perform semantic search.")
 
     client = Mistral(api_key=API_KEY)
-    print("Mistral Client initialized successfully.") # Check client initialization
+    print("Mistral Client initialized successfully.")
 
-    query_embedding = None # Initialize outside try block
+    query_embedding = None
     try:
-        query_embedding_response = client.embeddings(model="mistral-embed", input=[query])
+        # Use client.embeddings.create instead of client.embeddings
+        query_embedding_response = client.embeddings.create(model="mistral-embed", input=[query])
         query_embedding = query_embedding_response.data[0].embedding.vector
-        print(f"Query embedding generated successfully. Embedding length: {len(query_embedding) if query_embedding else 'None'}") # Check query embedding
+        print(f"Query embedding generated successfully. Embedding length: {len(query_embedding) if query_embedding else 'None'}")
     except Exception as e:
         print(f"Error generating embedding for query: {e}")
         return []
 
-    if query_embedding is None: # Check if embedding generation failed
+    if query_embedding is None:
         print("Query embedding is None, cannot proceed with search.")
         return []
 
@@ -128,7 +129,7 @@ def search_contact_in_database(query):
     cursor.execute("SELECT * FROM contacts")
     rows = cursor.fetchall()
     conn.close()
-    print(f"Fetched {len(rows)} contacts from the database.") # Check fetched contacts
+    print(f"Fetched {len(rows)} contacts from the database.")
 
     results = []
     for row in rows:
@@ -143,32 +144,32 @@ def search_contact_in_database(query):
         )
 
         contact_text_for_embedding = f"{contact.first_name} {contact.last_name} {contact.notes}"
-        print(f"Generating embedding for contact: {contact.first_name} {contact.last_name}, Text: '{contact_text_for_embedding}'") # Check contact text
+        print(f"Generating embedding for contact: {contact.first_name} {contact.last_name}, Text: '{contact_text_for_embedding}'")
 
-        contact_embedding = None # Initialize outside try block
+        contact_embedding = None
         try:
-            contact_embedding_response = client.embeddings(model="mistral-embed", input=[contact_text_for_embedding])
+            # Use client.embeddings.create instead of client.embeddings
+            contact_embedding_response = client.embeddings.create(model="mistral-embed", input=[contact_text_for_embedding])
             contact_embedding = contact_embedding_response.data[0].embedding.vector
-            print(f"Contact embedding generated successfully. Embedding length: {len(contact_embedding) if contact_embedding else 'None'}") # Check contact embedding
+            print(f"Contact embedding generated successfully. Embedding length: {len(contact_embedding) if contact_embedding else 'None'}")
         except Exception as e:
             print(f"Error generating embedding for contact {contact.contact_id}: {e}")
             continue
 
-        if contact_embedding is None: # Check if embedding generation failed
+        if contact_embedding is None:
             print(f"Contact embedding for {contact.contact_id} is None, skipping similarity calculation.")
             continue
 
-
         similarity = cosine_similarity(query_embedding, contact_embedding)
-        print(f"Similarity between query and contact {contact.contact_id}: {similarity}") # Check similarity score
+        print(f"Similarity between query and contact {contact.contact_id}: {similarity}")
 
         if similarity > SIMILARITY_THRESHOLD:
-            print(f"Contact {contact.contact_id} is above threshold ({SIMILARITY_THRESHOLD}), adding to results.") # Check threshold condition
+            print(f"Contact {contact.contact_id} is above threshold ({SIMILARITY_THRESHOLD}), adding to results.")
             results.append((contact, similarity))
         else:
-            print(f"Contact {contact.contact_id} is below threshold ({SIMILARITY_THRESHOLD}).") # Check threshold condition
+            print(f"Contact {contact.contact_id} is below threshold ({SIMILARITY_THRESHOLD}).")
 
     results.sort(key=lambda x: x[1], reverse=True)
-    print(f"Returning {len(results)} search results.") # Check number of results
+    print(f"Returning {len(results)} search results.")
 
     return [contact for contact, similarity in results]
