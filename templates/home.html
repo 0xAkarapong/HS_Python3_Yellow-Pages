@@ -40,6 +40,7 @@
 </head>
 <body>
     <h1>My Contacts</h1>
+    <p><button onclick="location.href='{{ url_for('add_contact') }}'">Add New Contact</button></p>
 
     {% if contacts %}
     <table>
