@@ -41,3 +41,4 @@ def search():
 if __name__ == '__main__':
     create_database_table()
     app.run(debug=True)
+    
