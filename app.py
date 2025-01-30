@@ -24,9 +24,15 @@ def add_contact():
 
         new_contact = contact
         add_contact_to_database(new_contact)
-        return redirect(url_for('home')) #
+        return redirect(url_for('home')) 
 
     return render_template('add_contact.html')
+
+@app.route('/delete/<int:contact_id>')
+def delete_contact(contact_id):
+    delete_contact_from_database(contact_id)
+    return redirect(url_for('home'))
+
 if __name__ == '__main__':
     create_database_table()
     app.run(debug=True)

@@ -40,7 +40,7 @@
 </head>
 <body>
     <h1>My Contacts</h1>
-    <p><button onclick="location.href='{{ url_for('add_contact') }}'">Add New Contact</button></p>
+    <p><button onclick='location.href="{{ url_for('add_contact') }}"'>Add New Contact</button></p>
 
     {% if contacts %}
     <table>
@@ -63,6 +63,7 @@
                 <td>{{ contact.email }}</td>
                 <td>{{ contact.address }}</td>
                 <td>{{ contact.notes }}</td>
+                <td><a href="{{ url_for('delete_contact', contact_id=contact.contact_id) }}">Delete</a></td>
             </tr>
             {% endfor %}
         </tbody>
