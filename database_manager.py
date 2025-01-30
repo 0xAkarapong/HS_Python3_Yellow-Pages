@@ -79,8 +79,12 @@ def update_contact_in_database(contact):
 
 def delete_contact_from_database(contact):
     conn = sqlite3.connect(DATABASE_NAME)
-    pass
+    cursor = conn.cursor()
+    cursor.execute('''DELETE FROM contacts WHERE id = ?''', (contact.contact_id,))
+    conn.commit()
+    conn.close()
 
 def search_contact_in_database(contact):
     conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
     pass
