@@ -1,8 +1,10 @@
 import sqlite3
+import math
 from mistralai import Mistral
 from dotenv import load_dotenv
 import os
 import numpy as np
+import time
 
 load_dotenv()
 
@@ -20,7 +22,7 @@ class Contact:
         self.address = address
         self.notes = notes
 
-def create_database_table() :
+def create_database_table():
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
     cursor.execute('''
@@ -41,14 +43,13 @@ def add_contact_to_database(contact: Contact) -> int:
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
     cursor.execute('''
-            INSERT INTO contacts (first_name, last_name, phone, email, address, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (contact.first_name, contact.last_name, contact.phone, contact.email, contact.address, contact.notes))
-    conn.commit()
+        INSERT INTO contacts (first_name, last_name, phone, email, address, notes)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (contact.first_name, contact.last_name, contact.phone, contact.email, contact.address, contact.notes))
     contact_id = cursor.lastrowid
+    conn.commit()
     conn.close()
     return contact_id
-
 
 def get_all_contacts_from_database():
     conn = sqlite3.connect(DATABASE_NAME)
@@ -56,7 +57,6 @@ def get_all_contacts_from_database():
     cursor.execute("SELECT * FROM contacts")
     rows = cursor.fetchall()
     conn.close()
-
     contacts = []
     for row in rows:
         contact = Contact(
@@ -95,12 +95,26 @@ def delete_contact_from_database(contact_id):
     conn.close()
 
 def cosine_similarity(vec1, vec2):
-    dot_product = np.dot(vec1, vec2)
-    norm_vec1 = np.linalg.norm(vec1)
-    norm_vec2 = np.linalg.norm(vec2)
+    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    norm_vec1 = math.sqrt(sum(a * a for a in vec1))
+    norm_vec2 = math.sqrt(sum(b * b for b in vec2))
     if norm_vec1 == 0 or norm_vec2 == 0:
         return 0
     return dot_product / (norm_vec1 * norm_vec2)
+
+def get_embedding_with_retry(client, model, inputs, max_retries=5, backoff_factor=1):
+    for attempt in range(max_retries):
+        try:
+            response = client.embeddings.create(model=model, inputs=inputs)
+            return response.data[0].embedding
+        except Exception as e:
+            if "Requests rate limit exceeded" in str(e):
+                wait_time = backoff_factor * (2 ** attempt)
+                print(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                raise e
+    raise Exception("Max retries exceeded")
 
 def search_contact_in_database(query):
     print(f"Searching for query: '{query}'")
@@ -112,9 +126,7 @@ def search_contact_in_database(query):
 
     query_embedding = None
     try:
-        # Use client.embeddings.create instead of client.embeddings
-        query_embedding_response = client.embeddings.create(model="mistral-embed", input=[query])
-        query_embedding = query_embedding_response.data[0].embedding.vector
+        query_embedding = get_embedding_with_retry(client, "mistral-embed", query)
         print(f"Query embedding generated successfully. Embedding length: {len(query_embedding) if query_embedding else 'None'}")
     except Exception as e:
         print(f"Error generating embedding for query: {e}")
@@ -148,9 +160,7 @@ def search_contact_in_database(query):
 
         contact_embedding = None
         try:
-            # Use client.embeddings.create instead of client.embeddings
-            contact_embedding_response = client.embeddings.create(model="mistral-embed", input=[contact_text_for_embedding])
-            contact_embedding = contact_embedding_response.data[0].embedding.vector
+            contact_embedding = get_embedding_with_retry(client, "mistral-embed", contact_text_for_embedding)
             print(f"Contact embedding generated successfully. Embedding length: {len(contact_embedding) if contact_embedding else 'None'}")
         except Exception as e:
             print(f"Error generating embedding for contact {contact.contact_id}: {e}")
@@ -171,5 +181,4 @@ def search_contact_in_database(query):
 
     results.sort(key=lambda x: x[1], reverse=True)
     print(f"Returning {len(results)} search results.")
-
     return [contact for contact, similarity in results]
