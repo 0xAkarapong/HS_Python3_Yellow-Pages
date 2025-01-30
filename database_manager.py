@@ -2,7 +2,8 @@ from constants import *
 import sqlite3
 
 class Contact:
-    def __init__(self, first_name, last_name, phone, email, address, notes):
+    def __init__(self, first_name, last_name, phone, email, address, notes, contact_id=None):
+        self.contact_id = contact_id
         self.first_name = first_name
         self.last_name = last_name
         self.phone = phone
